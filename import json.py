@@ -1,12 +1,7 @@
 import json
 from pathlib import Path
-import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog
 
-# =========================
-#   DATA & CORE LOGIC
-# =========================
-
+# Data will be stored in this JSON file
 DATA_FILE = Path("library_data.json")
 
 def load_data():
@@ -28,102 +23,154 @@ def generate_book_id(data):
         return 1
     return max(book["id"] for book in data["books"]) + 1
 
+def add_book(data):
+    print("\n=== Add New Book ===")
+    title = input("Enter title: ").strip()
+    author = input("Enter author: ").strip()
+    try:
+        total_copies = int(input("Total copies: "))
+    except ValueError:
+        print("❌ Invalid number. Book not added.")
+        return
 
-# =========================
-#         GUI APP
-# =========================
+    book = {
+        "id": generate_book_id(data),
+        "title": title,
+        "author": author,
+        "total_copies": total_copies,
+        "available_copies": total_copies,
+    }
+    data["books"].append(book)
+    save_data(data)
+    print(f"✅ Book added with ID: {book['id']}")
 
-class LibraryApp(tk.Tk):
-    def __init__(self):
-        super().__init__()
+def list_books(data):
+    print("\n=== All Books ===")
+    if not data["books"]:
+        print("No books in library.")
+        return
 
-        self.title("📚 Library Management System")
-        self.geometry("900x500")
-        self.resizable(False, False)
+    print(f"{'ID':<5} {'Title':<25} {'Author':<20} {'Avail/Total':<10}")
+    print("-" * 65)
+    for b in data["books"]:
+        print(f"{b['id']:<5} {b['title']:<25} {b['author']:<20} "
+              f"{b['available_copies']}/{b['total_copies']}")
 
-        # App data
-        self.data = load_data()
+def search_book(data):
+    print("\n=== Search Book ===")
+    keyword = input("Enter title or author keyword: ").strip().lower()
+    results = [
+        b for b in data["books"]
+        if keyword in b["title"].lower() or keyword in b["author"].lower()
+    ]
 
-        # Main style
-        self.configure(bg="#f5f5f5")
-        style = ttk.Style(self)
-        style.theme_use("clam")
-        style.configure("TFrame", background="#f5f5f5")
-        style.configure("TLabel", background="#f5f5f5", font=("Segoe UI", 10))
-        style.configure("Header.TLabel", font=("Segoe UI", 16, "bold"))
-        style.configure("TButton", font=("Segoe UI", 10))
-        style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"))
+    if not results:
+        print("No matching books found.")
+        return
 
-        self.create_widgets()
+    for b in results:
+        print(f"ID: {b['id']} | {b['title']} by {b['author']} "
+              f"| Avail: {b['available_copies']}")
 
-    # ---------- UI Layout ----------
+def issue_book(data):
+    print("\n=== Issue Book ===")
+    try:
+        book_id = int(input("Enter book ID: "))
+    except ValueError:
+        print("❌ Invalid ID.")
+        return
 
-    def create_widgets(self):
-        # Header
-        header_frame = ttk.Frame(self, padding=10)
-        header_frame.pack(fill="x")
+    student = input("Student name: ").strip()
 
-        title_lbl = ttk.Label(
-            header_frame,
-            text="Library Management System",
-            style="Header.TLabel"
-        )
-        title_lbl.pack(side="left")
+    # find book
+    book = next((b for b in data["books"] if b["id"] == book_id), None)
+    if not book:
+        print("Book not found.")
+        return
 
-        sub_lbl = ttk.Label(
-            header_frame,
-            text="Manage books • Issue & return • Search",
-            foreground="#555"
-        )
-        sub_lbl.pack(side="left", padx=10)
+    if book["available_copies"] <= 0:
+        print("No copies available.")
+        return
 
-        # Tabs
-        notebook = ttk.Notebook(self)
-        notebook.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+    # record issue
+    issue_record = {
+        "book_id": book_id,
+        "student": student,
+    }
+    data["issued"].append(issue_record)
+    book["available_copies"] -= 1
+    save_data(data)
+    print(f"✅ Issued '{book['title']}' to {student}")
 
-        self.books_tab = ttk.Frame(notebook, padding=10)
-        self.issued_tab = ttk.Frame(notebook, padding=10)
+def return_book(data):
+    print("\n=== Return Book ===")
+    try:
+        book_id = int(input("Enter book ID: "))
+    except ValueError:
+        print("❌ Invalid ID.")
+        return
 
-        notebook.add(self.books_tab, text="📘 Books")
-        notebook.add(self.issued_tab, text="📄 Issued Books")
+    student = input("Student name: ").strip()
 
-        self.build_books_tab()
-        self.build_issued_tab()
+    # find issue record
+    for i, rec in enumerate(data["issued"]):
+        if rec["book_id"] == book_id and rec["student"].lower() == student.lower():
+            # remove record
+            data["issued"].pop(i)
 
-    # ---------- Books Tab ----------
+            # increment book copies
+            book = next((b for b in data["books"] if b["id"] == book_id), None)
+            if book:
+                book["available_copies"] += 1
 
-    def build_books_tab(self):
-        # Top section: Add Book
-        add_frame = ttk.LabelFrame(self.books_tab, text="Add New Book", padding=10)
-        add_frame.pack(fill="x")
+            save_data(data)
+            print("✅ Book returned successfully.")
+            return
 
-        ttk.Label(add_frame, text="Title:").grid(row=0, column=0, sticky="w", pady=2)
-        self.title_entry = ttk.Entry(add_frame, width=30)
-        self.title_entry.grid(row=0, column=1, sticky="w", pady=2, padx=5)
+    print("No matching issue record found.")
 
-        ttk.Label(add_frame, text="Author:").grid(row=0, column=2, sticky="w", pady=2)
-        self.author_entry = ttk.Entry(add_frame, width=25)
-        self.author_entry.grid(row=0, column=3, sticky="w", pady=2, padx=5)
+def view_issued(data):
+    print("\n=== Issued Books ===")
+    if not data["issued"]:
+        print("No books are issued.")
+        return
 
-        ttk.Label(add_frame, text="Total copies:").grid(row=0, column=4, sticky="w", pady=2)
-        self.copies_entry = ttk.Entry(add_frame, width=10)
-        self.copies_entry.grid(row=0, column=5, sticky="w", pady=2, padx=5)
+    for rec in data["issued"]:
+        book = next((b for b in data["books"] if b["id"] == rec["book_id"]), None)
+        title = book["title"] if book else "Unknown"
+        print(f"Book ID: {rec['book_id']} | Title: {title} | Student: {rec['student']}")
 
-        add_btn = ttk.Button(add_frame, text="➕ Add Book", command=self.gui_add_book)
-        add_btn.grid(row=0, column=6, padx=10)
+def main():
+    data = load_data()
+    while True:
+        print("\n=== Library Management System ===")
+        print("1. Add book")
+        print("2. List all books")
+        print("3. Search book")
+        print("4. Issue book")
+        print("5. Return book")
+        print("6. View issued books")
+        print("0. Exit")
 
-        for i in range(7):
-            add_frame.columnconfigure(i, weight=0)
+        choice = input("Enter choice: ").strip()
 
-        # Search section
-        search_frame = ttk.LabelFrame(self.books_tab, text="Search", padding=10)
-        search_frame.pack(fill="x", pady=(10, 5))
+        if choice == "1":
+            add_book(data)
+        elif choice == "2":
+            list_books(data)
+        elif choice == "3":
+            search_book(data)
+        elif choice == "4":
+            issue_book(data)
+        elif choice == "5":
+            return_book(data)
+        elif choice == "6":
+            view_issued(data)
+        elif choice == "0":
+            print("Exiting...")
+            break
+        else:
+            print("❌ Invalid choice, try again.")
 
-        ttk.Label(search_frame, text="Title/Author:").grid(row=0, column=0, sticky="w")
-        self.search_entry = ttk.Entry(search_frame, width=40)
-        self.search_entry.grid(row=0, column=1, sticky="w", padx=5)
-
-        search_btn = ttk.Button(search_frame, text="🔍 Search", command=self.gui_search_books)
-        search_btn.grid(row=0, column=2, padx=5)
-
-        show_all_btn =
+if __name__ == "__main__":
+    main()
