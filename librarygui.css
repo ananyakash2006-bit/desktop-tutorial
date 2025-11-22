@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Library Manager — GUI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* base reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Poppins", sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #7f7bff, #4fc3f7);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: #ffffff;
+      padding: 22px;
+      border-radius: 15px;
+      width: 100%;
+      max-width: 1000px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 18px;
+    }
+
+    .title-row{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .cute{
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .panel {
+      background: #fbfbff;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 6px 18px rgba(126,123,255,0.06);
+    }
+
+    /* form */
+    form .row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    label {
+      font-size: 12px;
+      margin-bottom: 6px;
+      display: block;
+      color: #333;
+      font-weight: 600;
+    }
+
+    input[type="text"], input[type="date"], select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid #e6e6f7;
+      border-radius: 10px;
+      font-size: 14px;
+      transition: .2s;
+      background: white;
+    }
+
+    input[type="text"]:focus, input[type="date"]:focus, select:focus {
+      border-color: #7f7bff;
+      outline: none;
+    }
+
+    .btn {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .btn-primary {
+      background: #7f7bff;
+      color: white;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid #e3e3f5;
+      color: #333;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* list */
+    .list-area {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: 560px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .search-row input {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 2px solid #e6e6f7;
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    #bookList {
+      margin-top: 6px;
+      list-style: none;
+      overflow: auto;
+      padding-right: 6px;
+    }
+
+    #bookList li {
+      background: #f7f7ff;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      animation: fadeIn 0.18s ease-in-out;
+      border: 1px solid rgba(127,123,255,0.06);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .meta .title {
+      font-weight: 700;
+      font-size: 15px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .meta .sub {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .badges {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .badge {
+      font-size: 12px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+
+    .available { background: #e6fffa; color: #007a66; }
+    .borrowed { background: #fff3e6; color: #b75a00; }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .small {
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .small-edit { background: #ffdede; color: #5a1a1a; }
+    .small-delete { background: #ff5252; color: white; }
+    .small-toggle { background: #7f7bff; color: white; }
+
+    .muted { color: #888; font-size: 13px; }
+
+    /* responsive */
+    @media (max-width: 880px) {
+      .container { grid-template-columns: 1fr; }
+      .list-area { height: auto; }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- left panel: form -->
+    <div class="panel">
+      <div class="title-row">
+        <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><rect rx='8' width='48' height='48' fill='%237f7bff'/><text x='50%25' y='57%25' font-size='18' text-anchor='middle' fill='white' font-family='Poppins'>LIB</text></svg>" alt="logo" class="cute" />
+        <div>
+          <h1>Library Manager</h1>
+          <div class="muted">Add, edit, search and manage books</div>
+        </div>
+      </div>
+
+      <form id="bookForm">
+        <div class="row">
+          <div style="flex:1">
+            <label for="title">Title</label>
+            <input id="title" type="text" placeholder="Book title" required />
+          </div>
+        </div>
+
+        <div class="row">
+          <div style="flex:1">
+            <label for="author">Author</label>
+            <input id="author" type="text" placeholder="Author" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div style="flex:1">
+            <label for="isbn">ISBN</label>
+            <input id="isbn" type="text" placeholder="ISBN (optional)" />
+          </div>
+          <div style="width:120px">
+            <label for="category">Category</label>
+            <input id="category" type="text" placeholder="Fiction" />
+          </div>
+        </div>
+
+        <div class="row" id="borrow-row" style="display:none">
+          <div style="flex:1">
+            <label for="borrower">Borrower</label>
+            <input id="borrower" type="text" placeholder="Name of borrower" />
+          </div>
+          <div style="width:140px">
+            <label for="due">Due date</label>
+            <input id="due" type="date" />
+          </div>
+        </div>
+
+        <div style="margin-top:6px">
+          <label for="status">Status</label>
+          <select id="status">
+            <option value="available">Available</option>
+            <option value="borrowed">Borrowed</option>
+          </select>
+        </div>
+
+        <div class="controls">
+          <div style="display:flex; gap:8px;">
+            <button type="submit" class="btn btn-primary">Add / Save</button>
+            <button type="button" id="clearBtn" class="btn btn-ghost">Clear</button>
+          </div>
+          <div class="muted">Books saved locally in your browser</div>
+        </div>
+      </form>
+
+      <div style="margin-top:12px; display:flex; gap:8px;">
+        <button id="exportBtn" class="btn btn-ghost">Export JSON</button>
+        <button id="importBtn" class="btn btn-ghost">Import JSON</button>
+        <input type="file" id="fileInput" accept="application/json" style="display:none" />
+      </div>
+    </div>
+
+    <!-- right panel: list and controls -->
+    <div>
+      <div class="panel list-area">
+        <div>
+          <div class="search-row">
+            <input id="search" type="text" placeholder="Search by title, author, ISBN or category" />
+            <div class="filters">
+              <select id="filterStatus">
+                <option value="all">All</option>
+                <option value="available">Available</option>
+                <option value="borrowed">Borrowed</option>
+              </select>
+              <select id="sortBy">
+                <option value="added_desc">Newest</option>
+                <option value="added_asc">Oldest</option>
+                <option value="title_asc">Title A–Z</option>
+                <option value="title_desc">Title Z–A</option>
+              </select>
+            </div>
+          </div>
+
+          <ul id="bookList"></ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simple library manager using localStorage
+
+    const form = document.getElementById('bookForm');
+    const titleInput = document.getElementById('title');
+    const authorInput = document.getElementById('author');
+    const isbnInput = document.getElementById('isbn');
+    const categoryInput = document.getElementById('category');
+    const statusSelect = document.getElementById('status');
+    const borrowerInput = document.getElementById('borrower');
+    const dueInput = document.getElementById('due');
+    const borrowRow = document.getElementById('borrow-row');
+
+    const bookListEl = document.getElementById('bookList');
+    const searchInput = document.getElementById('search');
+    const filterStatus = document.getElementById('filterStatus');
+    const sortBy = document.getElementById('sortBy');
+    const clearBtn = document.getElementById('clearBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const importBtn = document.getElementById('importBtn');
+    const fileInput = document.getElementById('fileInput');
+
+    let books = []; // {id, title, author, isbn, category, status, borrower, due, added}
+    let editingId = null;
+
+    // load from localStorage
+    function load() {
+      try {
+        const raw = localStorage.getItem('library_books_v1');
+        books = raw ? JSON.parse(raw) : [];
+      } catch(e) {
+        books = [];
+      }
+    }
+
+    function save() {
+      localStorage.setItem('library_books_v1', JSON.stringify(books));
+    }
+
+    function resetForm() {
+      form.reset();
+      statusSelect.value = 'available';
+      borrowRow.style.display = 'none';
+      editingId = null;
+      document.querySelector('button[type="submit"]').textContent = 'Add / Save';
+    }
+
+    function render() {
+      // filter / search / sort
+      const q = searchInput.value.trim().toLowerCase();
+      let filtered = books.filter(b => {
+        if (filterStatus.value !== 'all' && b.status !== filterStatus.value) return false;
+        if (!q) return true;
+        return (
+          (b.title || '').toLowerCase().includes(q) ||
+          (b.author || '').toLowerCase().includes(q) ||
+          (b.isbn || '').toLowerCase().includes(q) ||
+          (b.category || '').toLowerCase().includes(q)
+        );
+      });
+
+      if (sortBy.value === 'added_desc') filtered.sort((a,b)=> b.added - a.added);
+      if (sortBy.value === 'added_asc') filtered.sort((a,b)=> a.added - b.added);
+      if (sortBy.value === 'title_asc') filtered.sort((a,b)=> a.title.localeCompare(b.title));
+      if (sortBy.value === 'title_desc') filtered.sort((a,b)=> b.title.localeCompare(a.title));
+
+      bookListEl.innerHTML = '';
+      if (filtered.length === 0) {
+        const li = document.createElement('li');
+        li.className = 'muted';
+        li.textContent = 'No books match your query.';
+        bookListEl.appendChild(li);
+        return;
+      }
+
+      filtered.forEach(book => {
+        const li = document.createElement('li');
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+
+        const title = document.createElement('div');
+        title.className = 'title';
+        title.textContent = book.title || 'Untitled';
+        meta.appendChild(title);
+
+        const sub = document.createElement('div');
+        sub.className = 'sub';
+        sub.textContent = `${book.author || 'Unknown author'} • ${book.category || 'Uncategorized'} ${book.isbn ? '• ISBN: ' + book.isbn : ''}`;
+        meta.appendChild(sub);
+
+        const badges = document.createElement('div');
+        badges.className = 'badges';
+
+        const statusBadge = document.createElement('div');
+        statusBadge.className = 'badge ' + (book.status === 'available' ? 'available' : 'borrowed');
+        statusBadge.textContent = book.status === 'available' ? 'Available' : 'Borrowed';
+        badges.appendChild(statusBadge);
+
+        if (book.status === 'borrowed') {
+          const who = document.createElement('div');
+          who.className = 'muted';
+          who.style.fontSize = '12px';
+          who.textContent = `By: ${book.borrower || '—'}${book.due ? ' • Due: ' + book.due : ''}`;
+          badges.appendChild(who);
+        }
+
+        const leftCol = document.createElement('div');
+        leftCol.style.display = 'flex';
+        leftCol.style.flexDirection = 'column';
+        leftCol.style.gap = '8px';
+        leftCol.appendChild(meta);
+        leftCol.appendChild(badges);
+
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'small small-toggle';
+        toggleBtn.textContent = book.status === 'available' ? 'Mark Borrowed' : 'Mark Available';
+        toggleBtn.title = 'Toggle availability';
+        toggleBtn.onclick = ()=> toggleStatus(book.id);
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'small small-edit';
+        editBtn.textContent = 'Edit';
+        editBtn.onclick = ()=> startEdit(book.id);
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'small small-delete';
+        delBtn.textContent = 'Delete';
+        delBtn.onclick = ()=> deleteBook(book.id);
+
+        actions.appendChild(toggleBtn);
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+
+        li.appendChild(leftCol);
+        li.appendChild(actions);
+
+        // layout tweak for small screens
+        li.style.flexWrap = 'wrap';
+        bookListEl.appendChild(li);
+      });
+    }
+
+    function addBook(book) {
+      books.push(book);
+      save();
+      render();
+    }
+
+    function updateBook(id, data) {
+      const idx = books.findIndex(b => b.id === id);
+      if (idx === -1) return;
+      books[idx] = {...books[idx], ...data};
+      save();
+      render();
+    }
+
+    function deleteBook(id) {
+      if (!confirm('Delete this book?')) return;
+      books = books.filter(b => b.id !== id);
+      save();
+      render();
+    }
+
+    function toggleStatus(id) {
+      const b = books.find(x => x.id === id);
+      if (!b) return;
+      if (b.status === 'available') {
+        const borrower = prompt('Enter borrower name:');
+        if (!borrower) return; // cancel
+        const due = prompt('Enter due date (YYYY-MM-DD) — optional:');
+        updateBook(id, { status: 'borrowed', borrower: borrower, due: due || '' });
+      } else {
+        if (!confirm('Mark as returned?')) return;
+        updateBook(id, { status: 'available', borrower: '', due: '' });
+      }
+    }
+
+    function startEdit(id) {
+      const b = books.find(x => x.id === id);
+      if (!b) return;
+      editingId = id;
+      titleInput.value = b.title || '';
+      authorInput.value = b.author || '';
+      isbnInput.value = b.isbn || '';
+      categoryInput.value = b.category || '';
+      statusSelect.value = b.status || 'available';
+      borrowerInput.value = b.borrower || '';
+      dueInput.value = b.due || '';
+      borrowRow.style.display = b.status === 'borrowed' ? 'flex' : 'none';
+      document.querySelector('button[type="submit"]').textContent = 'Save changes';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    form.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const title = titleInput.value.trim();
+      if (!title) return alert('Please enter a book title.');
+      const payload = {
+        title,
+        author: authorInput.value.trim(),
+        isbn: isbnInput.value.trim(),
+        category: categoryInput.value.trim(),
+        status: statusSelect.value,
+        borrower: borrowerInput.value.trim(),
+        due: dueInput.value || '',
+      };
+
+      if (editingId) {
+        updateBook(editingId, payload);
+        resetForm();
+      } else {
+        const book = { id: cryptoRandomId(), added: Date.now(), ...payload };
+        addBook(book);
+        resetForm();
+      }
+    });
+
+    statusSelect.addEventListener('change', ()=>{
+      borrowRow.style.display = statusSelect.value === 'borrowed' ? 'flex' : 'none';
+    });
+
+    searchInput.addEventListener('input', ()=> render());
+    filterStatus.addEventListener('change', ()=> render());
+    sortBy.addEventListener('change', ()=> render());
+
+    clearBtn.addEventListener('click', ()=> resetForm());
+
+    // export / import
+    exportBtn.addEventListener('click', ()=>{
+      const data = JSON.stringify(books, null, 2);
+      const blob = new Blob([data], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'library-books.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    importBtn.addEventListener('click', ()=> fileInput.click());
+    fileInput.addEventListener('change', (ev)=>{
+      const f = ev.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        try {
+          const imported = JSON.parse(reader.result);
+          if (!Array.isArray(imported)) throw new Error('Invalid format');
+          // basic validation
+          const merged = imported.map(i => ({ id: i.id || cryptoRandomId(), title: i.title || 'Untitled', author: i.author||'', isbn: i.isbn||'', category: i.category||'', status: i.status||'available', borrower: i.borrower||'', due: i.due||'', added: i.added || Date.now() }));
+          books = merged;
+          save();
+          render();
+          alert('Import successful');
+        } catch(e) {
+          alert('Failed to import: ' + e.message);
+        }
+      };
+      reader.readAsText(f);
+    });
+
+    // small utils
+    function cryptoRandomId() {
+      // simple id
+      return 'b_' + Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4);
+    }
+
+    // init
+    load();
+    render();
+
+  </script>
+</body>
+</html>
